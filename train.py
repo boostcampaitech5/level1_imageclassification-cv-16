@@ -8,6 +8,10 @@ import re
 from importlib import import_module
 from pathlib import Path
 
+#import wandb
+import wandb
+import random
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -232,6 +236,19 @@ def train(data_dir, model_dir, args):
             logger.add_scalar("Val/accuracy", val_acc, epoch)
             logger.add_figure("results", figure, epoch)
             print()
+            
+            #wandb log
+            wandb.log(
+                {
+                    'Training Loss' : train_loss,
+                    'Training Accuracy' : train_acc,
+                    'Learning Rate' : current_lr,
+                    #here
+                    'Validation Loss' : val_loss,
+                    'Validation Accuracy' : val_acc,
+                    'F1 Score' : None
+                }
+            )
 
 
 if __name__ == '__main__':
@@ -264,4 +281,20 @@ if __name__ == '__main__':
     data_dir = args.data_dir
     model_dir = args.model_dir
 
+    #wandb initialization
+    wandb.init(
+        project = 'Mask_Classification',
+        
+        config = {
+            'Name' : args.name,
+            'Model' : args.model,
+            'Seed' : args.seed,
+            'Epochs' : args.epochs,
+            'Learning Rate' : args.lr,
+            'Resize' : args.resize,
+            'Optimizer' : args.optimizer,
+            'Batch Size' : args.batch_size,
+            'Valid Batch Size' : args.valid_batch_size
+        }
+    )
     train(data_dir, model_dir, args)
