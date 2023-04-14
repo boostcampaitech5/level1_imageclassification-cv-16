@@ -32,6 +32,8 @@ class BaseModel(nn.Module):
         x = x.view(-1, 128)
         return self.fc(x)
 
+class TestModel():
+    pass
 
 # Custom Model Template
 class MyModel(nn.Module):
