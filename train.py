@@ -193,6 +193,7 @@ def train(data_dir, model_dir, args):
                 )
                 logger.add_scalar("Train/loss", train_loss, epoch * len(train_loader) + idx)
                 logger.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
+                logger.add_scalar("f1_score", f1, epoch * len(train_loader) + idx)
 
                 loss_value = 0
                 matches = 0
@@ -222,6 +223,7 @@ def train(data_dir, model_dir, args):
                 acc_item = (labels == preds).sum().item()
                 val_loss_items.append(loss_item)
                 val_acc_items.append(acc_item)
+                sumf1+=f1_score(preds.cpu(),labels.cpu(),average='macro')
 
                 if figure is None:
                     inputs_np = torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
