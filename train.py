@@ -22,6 +22,7 @@ from torch.utils.tensorboard import SummaryWriter
 from dataset import MaskBaseDataset
 from loss import create_criterion
 
+from sklearn.metrics import f1_score
 
 def seed_everything(seed):
     torch.manual_seed(seed)
@@ -155,6 +156,7 @@ def train(data_dir, model_dir, args):
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
 
     best_val_acc = 0
+    best_val_f1=0
     best_val_loss = np.inf
     earlystop_counter = 0
     for epoch in range(args.epochs):
@@ -162,6 +164,7 @@ def train(data_dir, model_dir, args):
         model.train()
         loss_value = 0
         matches = 0
+        sum_f1=0
         for idx, train_batch in enumerate(train_loader):
             inputs, labels = train_batch
             inputs = inputs.to(device)
@@ -178,22 +181,26 @@ def train(data_dir, model_dir, args):
 
             loss_value += loss.item()
             matches += (preds == labels).sum().item()
+            sum_f1+=f1_score(labels.cpu(),preds.cpu(),average='macro')
             if (idx + 1) % args.log_interval == 0:
                 train_loss = loss_value / args.log_interval
                 train_acc = matches / args.batch_size / args.log_interval
+                f1=sum_f1/args.log_interval
                 current_lr = get_lr(optimizer)
                 print(
                     f"Epoch[{epoch}/{args.epochs}]({idx + 1}/{len(train_loader)}) || "
-                    f"training loss {train_loss:4.4} || training accuracy {train_acc:4.2%} || lr {current_lr}"
+                    f"training loss {train_loss:4.4} || training accuracy {train_acc:4.2%} || f1_score {f1:4.2%} || lr {current_lr}"
                 )
                 logger.add_scalar("Train/loss", train_loss, epoch * len(train_loader) + idx)
                 logger.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
 
                 loss_value = 0
                 matches = 0
+                sum_f1=0
 
         scheduler.step()
 
+        
         # val loop
         with torch.no_grad():
             print("Calculating validation results...")
@@ -201,6 +208,8 @@ def train(data_dir, model_dir, args):
             val_loss_items = []
             val_acc_items = []
             figure = None
+            sumf1=0
+            count=0
             for val_batch in val_loader:
                 inputs, labels = val_batch
                 inputs = inputs.to(device)
@@ -220,24 +229,28 @@ def train(data_dir, model_dir, args):
                     figure = grid_image(
                         inputs_np, labels, preds, n=16, shuffle=args.dataset != "MaskSplitByProfileDataset"
                     )
+                count+=1
 
             val_loss = np.sum(val_loss_items) / len(val_loader)
             val_acc = np.sum(val_acc_items) / len(val_set)
+            val_f1=sumf1/count
             best_val_loss = min(best_val_loss, val_loss)
-            if val_acc > best_val_acc:
-                print(f"New best model for val accuracy : {val_acc:4.2%}! saving the best model..")
+            if val_f1 > best_val_f1:
+                print(f"New best model for val accuracy : {val_acc:4.2%}, f1 : {val_f1:4.2%}! saving the best model..")
                 torch.save(model.module.state_dict(), f"{save_dir}/best.pth")
+                best_val_f1 = val_f1
                 best_val_acc = val_acc
                 earlystop_counter = 0
             else:
                 earlystop_counter += 1
             torch.save(model.module.state_dict(), f"{save_dir}/last.pth")
             print(
-                f"[Val] acc : {val_acc:4.2%}, loss: {val_loss:4.2} || "
-                f"best acc : {best_val_acc:4.2%}, best loss: {best_val_loss:4.2}"
+                f"[Val] acc : {val_acc:4.2%}, f1 : {val_f1:4.2%}, loss: {val_loss:4.2} || "
+                f"best acc : {best_val_acc:4.2%}, best f1 : {best_val_f1:4.2%}, best loss: {best_val_loss:4.2}"
             )
             logger.add_scalar("Val/loss", val_loss, epoch)
             logger.add_scalar("Val/accuracy", val_acc, epoch)
+            logger.add_scalar("Val/f1_score", val_f1, epoch)
             logger.add_figure("results", figure, epoch)
             
             if earlystop_counter == args.patience:
