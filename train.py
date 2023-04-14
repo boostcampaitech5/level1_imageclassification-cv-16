@@ -267,7 +267,7 @@ def train(data_dir, model_dir, args):
                     #here
                     'Validation Loss' : val_loss,
                     'Validation Accuracy' : val_acc,
-                    'F1 Score' : None
+                    'F1 Score' : val_f1
                 }
             )
 
@@ -316,7 +316,8 @@ if __name__ == '__main__':
             'Resize' : args.resize,
             'Optimizer' : args.optimizer,
             'Batch Size' : args.batch_size,
-            'Valid Batch Size' : args.valid_batch_size
+            'Valid Batch Size' : args.valid_batch_size,
+            'Patience' : args.patience
         }
     )
     train(data_dir, model_dir, args)
