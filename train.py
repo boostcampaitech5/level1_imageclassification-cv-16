@@ -237,10 +237,11 @@ def train(data_dir, model_dir, args):
             val_acc = np.sum(val_acc_items) / len(val_set)
             val_f1=sumf1/count
             best_val_loss = min(best_val_loss, val_loss)
-            if val_f1 > best_val_f1:
-                print(f"New best model for val accuracy : {val_acc:4.2%}, f1 : {val_f1:4.2%}! saving the best model..")
+            if val_loss < best_val_loss:
+                print(f"New best model for val loss : {val_loss}, acc : {val_acc:4.2%}, f1 : {val_f1:4.2%}! saving the best model..")
                 torch.save(model.module.state_dict(), f"{save_dir}/best.pth")
                 best_val_f1 = val_f1
+                best_val_loss = val_loss
                 best_val_acc = val_acc
                 earlystop_counter = 0
             else:
@@ -282,7 +283,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=1, help='number of epochs to train (default: 1)')
     parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset augmentation type (default: MaskBaseDataset)')
     parser.add_argument('--augmentation', type=str, default='BaseAugmentation', help='data augmentation type (default: BaseAugmentation)')
-    parser.add_argument("--resize", nargs="+", type=list, default=[128, 96], help='resize size for image when training')
+    parser.add_argument("--resize", nargs="+", type=int, default=[128, 96], help='resize size for image when training')
     parser.add_argument('--batch_size', type=int, default=64, help='input batch size for training (default: 64)')
     parser.add_argument('--valid_batch_size', type=int, default=1000, help='input batch size for validing (default: 1000)')
     parser.add_argument('--model', type=str, default='BaseModel', help='model type (default: BaseModel)')
@@ -320,6 +321,8 @@ if __name__ == '__main__':
             'Batch Size' : args.batch_size,
             'Valid Batch Size' : args.valid_batch_size,
             'Patience' : args.patience
-        }
+        },
+        
+        name = 'Lee)' + args.model + 'NoResize'
     )
     train(data_dir, model_dir, args)
