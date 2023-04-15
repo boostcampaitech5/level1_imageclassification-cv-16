@@ -266,18 +266,18 @@ def train(data_dir, model_dir, args, model_name, num_classes):
                 break
             print()
             
-            # # wandb log
-            # wandb.log(
-            #     {
-            #         'Training Loss' : train_loss,
-            #         'Training Accuracy' : train_acc,
-            #         'Learning Rate' : current_lr,
-            #         #here
-            #         'Validation Loss' : val_loss,
-            #         'Validation Accuracy' : val_acc,
-            #         'F1 Score' : val_f1
-            #     }
-            # )
+            # wandb log
+            wandb.log(
+                {
+                    f'{model_name}/Training Loss' : train_loss,
+                    f'{model_name}/Training Accuracy' : train_acc,
+                    f'{model_name}/Learning Rate' : current_lr,
+                    #here
+                    f'{model_name}/Validation Loss' : val_loss,
+                    f'{model_name}/Validation Accuracy' : val_acc,
+                    f'{model_name}/F1 Score' : val_f1
+                }
+            )
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -311,25 +311,25 @@ if __name__ == '__main__':
     model_dir = args.model_dir
     model_dir = increment_path(os.path.join(model_dir, args.name))
 
-    # # wandb initialization
-    # wandb.init(
-    #     project = 'Mask_Classification',
+    # wandb initialization
+    wandb.init(
+        project = 'Mask_Classification',
         
-    #     config = {
-    #         'Name' : args.name,
-    #         'Model' : args.model,
-    #         'Seed' : args.seed,
-    #         'Epochs' : args.epochs,
-    #         'Learning Rate' : args.lr,
-    #         'Resize' : args.resize,
-    #         'Optimizer' : args.optimizer,
-    #         'Batch Size' : args.batch_size,
-    #         'Valid Batch Size' : args.valid_batch_size,
-    #         'Patience' : args.patience
-    #     },
+        config = {
+            'Name' : args.name,
+            'Model' : args.model,
+            'Seed' : args.seed,
+            'Epochs' : args.epochs,
+            'Learning Rate' : args.lr,
+            'Resize' : args.resize,
+            'Optimizer' : args.optimizer,
+            'Batch Size' : args.batch_size,
+            'Valid Batch Size' : args.valid_batch_size,
+            'Patience' : args.patience
+        },
         
-    #     name = f'Geun){args.model}/{args.lr}'
-    # )
+        name = f'Geun){3Head}/{args.model}/{args.lr}'
+    )
     
     #-- Mask Train    
     model_name = 'mask'
