@@ -328,7 +328,7 @@ if __name__ == '__main__':
             'Patience' : args.patience
         },
         
-        name = f'Geun){3Head}/{args.model}/{args.lr}'
+        name = f'Geun)3Head/{args.model}/{args.lr}'
     )
     
     #-- Mask Train    
