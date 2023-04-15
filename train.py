@@ -242,6 +242,7 @@ def train(data_dir, model_dir, args):
                 print(f"New best model for val accuracy : {val_acc:4.2%}, f1 : {val_f1:4.2%}, loss: {val_loss:4.2%} !saving the best model..")
                 torch.save(model.module.state_dict(), f"{save_dir}/best.pth")
                 best_val_f1 = val_f1
+                best_val_loss = val_loss
                 best_val_acc = val_acc
                 best_val_loss = val_loss
                 earlystop_counter = 0
@@ -324,7 +325,7 @@ if __name__ == '__main__':
             'Valid Batch Size' : args.valid_batch_size,
             'Patience' : args.patience
         },
-        
+
         name = f'Geun){args.model}/{args.lr}'
     )
     train(data_dir, model_dir, args)
