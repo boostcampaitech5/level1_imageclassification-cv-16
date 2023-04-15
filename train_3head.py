@@ -8,7 +8,6 @@ import re
 from importlib import import_module
 from pathlib import Path
 
-#import wandb
 import wandb
 import random
 
@@ -19,7 +18,7 @@ from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from dataset import MaskBaseDataset
+from dataset_3head import MaskBaseDataset
 from loss import create_criterion
 
 from sklearn.metrics import f1_score
@@ -87,24 +86,24 @@ def increment_path(path, exist_ok=False):
         return f"{path}{n}"
 
 
-def train(data_dir, model_dir, args):
+def train(data_dir, model_dir, args, model_name, num_classes):
     seed_everything(args.seed)
 
-    save_dir = increment_path(os.path.join(model_dir, args.name))
+    save_dir = increment_path(os.path.join(model_dir, model_name))
 
     # -- settings
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
     # -- dataset
-    dataset_module = getattr(import_module("dataset"), args.dataset)  # default: MaskBaseDataset
+    dataset_module = getattr(import_module("dataset_3head"), args.dataset)  # default: MaskBaseDataset
     dataset = dataset_module(
         data_dir=data_dir,
+        model_name=model_name
     )
-    num_classes = dataset.num_classes  # 18
-
+    
     # -- augmentation
-    transform_module = getattr(import_module("dataset"), args.augmentation)  # default: BaseAugmentation
+    transform_module = getattr(import_module("dataset_3head"), args.augmentation)  # default: BaseAugmentation
     transform = transform_module(
         resize=args.resize,
         mean=dataset.mean,
@@ -166,6 +165,7 @@ def train(data_dir, model_dir, args):
         loss_value = 0
         matches = 0
         sum_f1=0
+
         for idx, train_batch in enumerate(train_loader):
             inputs, labels = train_batch
             inputs = inputs.to(device)
@@ -182,11 +182,13 @@ def train(data_dir, model_dir, args):
 
             loss_value += loss.item()
             matches += (preds == labels).sum().item()
-            sum_f1+=f1_score(labels.cpu(),preds.cpu(),average='macro')
+            sum_f1 += f1_score(labels.cpu(), preds.cpu(), average='macro')
+            
             if (idx + 1) % args.log_interval == 0:
                 train_loss = loss_value / args.log_interval
                 train_acc = matches / args.batch_size / args.log_interval
                 f1 = sum_f1 / args.log_interval
+                
                 current_lr = get_lr(optimizer)
                 print(
                     f"Epoch[{epoch}/{args.epochs}]({idx + 1}/{len(train_loader)}) || "
@@ -242,7 +244,6 @@ def train(data_dir, model_dir, args):
                 print(f"New best model for val accuracy : {val_acc:4.2%}, f1 : {val_f1:4.2%}, loss: {val_loss:4.2%} !saving the best model..")
                 torch.save(model.module.state_dict(), f"{save_dir}/best.pth")
                 best_val_f1 = val_f1
-                best_val_loss = val_loss
                 best_val_acc = val_acc
                 best_val_loss = val_loss
                 earlystop_counter = 0
@@ -265,16 +266,16 @@ def train(data_dir, model_dir, args):
                 break
             print()
             
-            #wandb log
+            # wandb log
             wandb.log(
                 {
-                    'Training Loss' : train_loss,
-                    'Training Accuracy' : train_acc,
-                    'Learning Rate' : current_lr,
+                    f'{model_name}/Training Loss' : train_loss,
+                    f'{model_name}/Training Accuracy' : train_acc,
+                    f'{model_name}/Learning Rate' : current_lr,
                     #here
-                    'Validation Loss' : val_loss,
-                    'Validation Accuracy' : val_acc,
-                    'F1 Score' : val_f1
+                    f'{model_name}/Validation Loss' : val_loss,
+                    f'{model_name}/Validation Accuracy' : val_acc,
+                    f'{model_name}/F1 Score' : val_f1
                 }
             )
 
@@ -308,8 +309,9 @@ if __name__ == '__main__':
 
     data_dir = args.data_dir
     model_dir = args.model_dir
+    model_dir = increment_path(os.path.join(model_dir, args.name))
 
-    #wandb initialization
+    # wandb initialization
     wandb.init(
         project = 'Mask_Classification',
         
@@ -325,7 +327,24 @@ if __name__ == '__main__':
             'Valid Batch Size' : args.valid_batch_size,
             'Patience' : args.patience
         },
-
-        name = f'Geun){args.model}/{args.lr}'
+        
+        name = f'Geun)3Head/{args.model}/{args.lr}'
     )
-    train(data_dir, model_dir, args)
+    
+    #-- Mask Train    
+    model_name = 'mask'
+    print(f"{model_name} Model Train Start...")
+    train(data_dir, model_dir, args, model_name, num_classes=3)
+    print(f"{model_name} Model Train End...")
+    
+    #-- Gender Train    
+    model_name = 'gender'
+    print(f"{model_name} Model Train Start...")
+    train(data_dir, model_dir, args, model_name, num_classes=2)
+    print(f"{model_name} Model Train End...")
+    
+    #-- Age Train    
+    model_name = 'age'
+    print(f"{model_name} Model Train Start...")
+    train(data_dir, model_dir, args, model_name, num_classes=3)
+    print(f"{model_name} Model Train End...")
