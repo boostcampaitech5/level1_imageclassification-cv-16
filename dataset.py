@@ -155,11 +155,19 @@ class MaskBaseDataset(Dataset):
                 _file_name, ext = os.path.splitext(file_name)
                 if _file_name not in self._file_names:  # "." 로 시작하는 파일 및 invalid 한 파일들은 무시합니다
                     continue
-
+                mis_label = ['006364','006363','006362','006361','006360','006359','004432','001720','001498_1']
                 img_path = os.path.join(self.data_dir, profile, file_name)  # (resized_data, 000004_male_Asian_54, mask1.jpg)
                 mask_label = self._file_names[_file_name]
 
                 id, gender, race, age = profile.split("_")
+                if id in mis_label:
+                    if gender == 'male':
+                        gender = 'female'
+                
+                    else:
+                        gender = 'male'
+                
+                
                 gender_label = GenderLabels.from_str(gender)
                 age_label = AgeLabels.from_number(age)
 
