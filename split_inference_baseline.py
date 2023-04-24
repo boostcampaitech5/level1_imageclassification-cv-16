@@ -9,7 +9,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from sklearn.metrics import f1_score
-from dataset import TestDataset, MaskBaseDataset
+from split_dataset_baseline import TestDataset, MaskBaseDataset
 
 
 def load_model(saved_model, num_classes, device):
