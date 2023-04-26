@@ -14,5 +14,10 @@
 6. 3개의 독립적인 모델의 Loss, Gradient Accumulation, FC layer initialization, Age classification threshold 조절 실험
 
 7. Classification이 잘 되지 않는 Age 클래스에 대해 EDA 수행, 관련 실험 가설 세운 뒤 실험
+    - Age 모델의 60대 이상 데이터 추가해주기
+    - Age 모델의 Loss를 Label Smoothing Loss로 변경
+    - Age 모델의 Label 세분화
+    - Age 모델의 다양한 Augmentation
+    - Age 모델을 3개의 독립적인 모델로 분할
 
 8. 높은 성능의 모델들로 Soft voting을 통해 최종 결과물 제작
