@@ -177,19 +177,3 @@ class CustomTrainDataset_60(Dataset):
         
     def __len__(self):
         return len(self.age_labels)
-
-class CustomTestDataset(Dataset):
-    def __init__(self, img_paths, resize, transforms=None):
-        self.img_paths = img_paths
-        self.resize = resize
-        self.transforms = transforms
-
-    def __getitem__(self, index):
-        image = cv2.imread(self.img_paths[index])
-        trfm = get_transforms(self.resize, self.transforms)
-        image = trfm(image=image)['image']
-            
-        return image
-
-    def __len__(self):
-        return len(self.img_paths)
